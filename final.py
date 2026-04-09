@@ -10,24 +10,45 @@ import json
 import io
 import google.generativeai as genai
 import warnings
+import os
+
 warnings.filterwarnings("ignore")
+
 # =====================
 # CONFIG
 # =====================
-# genai.configure(api_key="AIzaSyDEKSYVltmPNPzb5WT6XE6dOPnJ5o2g-xI")
-import os
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 app = FastAPI(title="Civic Issue Detection API")
 
 # =====================
-# LOAD MODEL & LABELS
+# PATH SETUP
 # =====================
-model = load_model("final_model.keras")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-with open("class_labels.json", "r") as f:
+model_path = os.path.join(BASE_DIR, "final_model.keras")
+labels_path = os.path.join(BASE_DIR, "class_labels.json")
+
+# =====================
+# LOAD LABELS
+# =====================
+with open(labels_path, "r") as f:
     class_indices = json.load(f)
 
 class_labels = {v: k for k, v in class_indices.items()}
+
+# =====================
+# LAZY LOAD MODEL
+# =====================
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        print("Loading model...")
+        model = load_model(model_path)
+        print("Model loaded")
+    return model
 
 # =====================
 # ISSUE MAPPING
@@ -88,6 +109,8 @@ def adjust_severity(base_severity, confidence):
 # PREDICTION FUNCTION
 # =====================
 def predict(img):
+    model = get_model()  # ✅ lazy load here
+
     img = img.resize((224, 224))
     img_array = image.img_to_array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
@@ -138,13 +161,10 @@ async def predict_api(file: UploadFile = File(...)):
 
     label, confidence = predict(img)
 
-    # Confidence safety
     if confidence < 0.5:
         label = "plain"
 
     issue_data = ISSUE_MAPPING.get(label.lower(), ISSUE_MAPPING["plain"])
-
-    # Adjust severity
     severity = adjust_severity(issue_data["severity"], confidence)
 
     report = generate_report(
