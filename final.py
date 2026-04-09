@@ -14,8 +14,9 @@ warnings.filterwarnings("ignore")
 # =====================
 # CONFIG
 # =====================
-genai.configure(api_key="AIzaSyDEKSYVltmPNPzb5WT6XE6dOPnJ5o2g-xI")
-
+# genai.configure(api_key="AIzaSyDEKSYVltmPNPzb5WT6XE6dOPnJ5o2g-xI")
+import os
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 app = FastAPI(title="Civic Issue Detection API")
 
 # =====================
