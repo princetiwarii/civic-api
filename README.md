@@ -1,6 +1,6 @@
 # 🚀 Civic Issue Detection API
 
-An AI-powered FastAPI backend that detects civic issues like **garbage, streetlight faults, potholes, and waterlogging** from images and generates structured reports.
+An AI-powered FastAPI backend that detects civic issues like **garbage, streetlight faults, potholes, and waterlogging** from images and generates structured reports. A Smart AI Model ..
 
 ---
 
